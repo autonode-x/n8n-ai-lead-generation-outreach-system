@@ -1,0 +1,1591 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-lead-generation",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -320,
+        -224
+      ],
+      "id": "14b55ab1-f12c-4861-99b1-df19f00beafb",
+      "name": "Webhook",
+      "webhookId": "2f8e5a91-6d3c-4b7a-9e5f-1c8d6b3a9e42"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f7a197c7-610a-4008-aab9-4fd302852e65",
+              "name": "search_query",
+              "value": "={{$json.body.search_query.trim() || \"\"}}",
+              "type": "string"
+            },
+            {
+              "id": "205cc5c2-bc7a-44a8-8979-f72a69d68b56",
+              "name": "location",
+              "value": "={{ $json.body.location.trim() || \"\"}}",
+              "type": "string"
+            },
+            {
+              "id": "220d19d5-6216-4605-8362-d7c89fc2789b",
+              "name": "industry",
+              "value": "={{ $json.body.industry.trim() || \"\"}}",
+              "type": "string"
+            },
+            {
+              "id": "c2b41e16-74fc-44a1-b963-c3356dced7c9",
+              "name": "business_type",
+              "value": "={{ $json.body.business_type.trim() || \"\"}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -96,
+        -224
+      ],
+      "id": "04c9f3c4-55c1-451f-8037-40fa3352eaa0",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "serpApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{$json.search_query + \" \" + $json.location}}"
+            },
+            {
+              "name": "num",
+              "value": "20"
+            },
+            {
+              "name": "engine",
+              "value": "google"
+            },
+            {
+              "name": "gl",
+              "value": "={{$json.country || \"us\"}}"
+            },
+            {
+              "name": "hI",
+              "value": "en"
+            },
+            {
+              "name": "location",
+              "value": "={{ $('Edit Fields').item.json.location }}"
+            },
+            {
+              "name": "safe",
+              "value": "active"
+            },
+            {
+              "name": "no_cache",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        352,
+        -320
+      ],
+      "id": "3bf9a912-0d75-4aad-b5f7-5d2a7b806b6f",
+      "name": "HTTP Request",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "serpApi": {
+          "id": "FAKE_SERPAPI_CRED_ID",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this business website.\n\nBusiness Name:\n{{ $('Edit Fields1').item.json['Bussiness Name'] }}\n\nWebsite:\n{{ $('Edit Fields1').item.json.Website }}\n\nBusiness Description:\n{{ $('Edit Fields1').item.json.Snippet }}\n\nWebsite Content:\n{{ $json.HTML.substring(0,15000) }}\n\nPlease perform a complete website audit.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a Senior AI Automation Consultant, CRO Expert, Website Auditor and Sales Consultant.\n\nAnalyze the website professionally.\n\nEvaluate:\n\n1. Website Quality\n2. UI & UX\n3. Mobile Friendliness\n4. Website Speed Indicators\n5. CTA Quality\n6. Lead Capture Forms\n7. Booking System\n8. CRM Integration Possibility\n9. Customer Support\n10. Trust Signals\n11. SEO Basics\n12. AI Automation Opportunities\n13. Sales Funnel\n14. Conversion Optimization\n15. Follow-up Opportunities\n\nAlso identify:\n\n- Biggest Business Problem\n- Biggest Automation Opportunity\n- Estimated Monthly Revenue Loss\n- Best AI Service to Offer\n\nScore the website from 0–100.\n\nReturn ONLY valid JSON.\n\nNever return markdown.\n\nNever explain outside JSON.",
+          "maxIterations": 1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1696,
+        -320
+      ],
+      "id": "48987f02-2591-47d8-92cf-67ecd420f4b2",
+      "name": "AI Agent1",
+      "notesInFlow": true,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput",
+      "notes": "Website Audit Agent"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"business_name\": \"\",\n  \"website_type\": \"\",\n  \"website_score\": 0,\n  \"overall_rating\": \"\",\n  \"biggest_problem\": \"\",\n  \"biggest_opportunity\": \"\",\n  \"estimated_monthly_loss\": \"\",\n  \"strengths\": [],\n  \"issues\": [],\n  \"seo_issues\": [],\n  \"trust_signals\": [],\n  \"automation_opportunities\": [],\n  \"lead_generation_opportunities\": [],\n  \"recommended_services\": [],\n  \"customer_support_analysis\": \"\",\n  \"cta_analysis\": \"\",\n  \"personalization_angle\": \"\",\n  \"cold_email_hook\": \"\",\n  \"summary\": \"\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1840,
+        -96
+      ],
+      "id": "51453b43-6000-46cf-9a18-2ac3f20350c2",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "sendTo": "=your-email@example.com",
+        "subject": "={{ $('AI Agent2').first().json.output.subject }}",
+        "message": "=<h2>Hello {{ $('AI Agent1').first().json.output.business_name }},</h2>\n\n<p>\nI came across your website and noticed a few opportunities that could help improve lead generation and customer experience.\n</p>\n\n<p>\n{{ $('AI Agent2').first().json.output.email_body }}\n</p>\n\n<br>\n\n<p>\nI'd be happy to record a free 5-minute website audit video for your business.\n</p>\n\n<p>\nLooking forward to hearing from you.\n</p>\n\n<br>\n\n<b>Your Name</b><br>\nFounder — AutoNode<br>\nAI Automations & AI Agents for Business",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "your-name",
+          "replyTo": "your-email@example.com"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        3424,
+        -416
+      ],
+      "id": "dcf47d3d-0b44-46b9-8371-008aeed2dcd4",
+      "name": "Send a message",
+      "webhookId": "8c4d7f92-3e6a-4b1c-9d8f-2e5a7c4b9f16",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "alwaysOutputData": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mK9vB3wLz7Qa5hDs",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": "={{ $('AI Agent2').first().json.output.follow_up_days || 3 }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3648,
+        -416
+      ],
+      "id": "9511c1e0-550b-446a-b756-4c7bf96912ef",
+      "name": "Wait",
+      "webhookId": "4a9c7e28-6d1f-4b9a-8c3e-7f2d5a8b6e91"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C05MZQK8FT2",
+          "mode": "list",
+          "cachedResultName": "your-channel-name"
+        },
+        "text": "=🚀 New Lead Processed\n\n🏢 Business:\n{{ $('AI Agent1').first().json.output.business_name }}\n\n🌐 Website:\n{{ $('Edit Fields1').first().json.Website }}\n\n⭐ Website Score:\n{{ $('AI Agent1').first().json.output.website_score }}\n\n🔥 Lead Score:\n{{ $('AI Agent').first().json.output.lead_score }}\n\n🎯 Priority:\n{{ $('AI Agent').first().json.output.priority }}\n\n💼 Recommended Offer:\n{{ $('AI Agent').first().json.output.recommended_offer }}\n\n📧 Initial Email Sent\n\n📅 Follow-up Scheduled\n\n🤖 Proposal Generation Started",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        4448,
+        -416
+      ],
+      "id": "b16e90e9-9c4c-4218-9d07-23bede8df474",
+      "name": "Send a message2",
+      "webhookId": "6e3f8b21-4c9d-4a7e-9f5b-3d8a2c6e9f74",
+      "credentials": {
+        "slackApi": {
+          "id": "xR4pW8gTn2LmYsQ1",
+          "name": "Slack account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "organic_results",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        576,
+        -320
+      ],
+      "id": "7150f37d-dca9-437e-838f-424d677bc5c2",
+      "name": "Split Out",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c4fbeeda-0bdd-4ebd-8765-90065d1e4b26",
+              "name": "Bussiness Name",
+              "value": "={{ $json.title || \"Unknown Business\" }}",
+              "type": "string"
+            },
+            {
+              "id": "6450be0e-d3a7-4e36-9717-89334760cb0b",
+              "name": "Website",
+              "value": "={{ $json.link?.trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "2f86654b-f25e-4313-b53a-e90de027bb85",
+              "name": "Snippet",
+              "value": "={{ $json.snippet || \"No description available.\" }}",
+              "type": "string"
+            },
+            {
+              "id": "2065d56e-4008-45d4-b34e-fca52cc4704b",
+              "name": "position",
+              "value": "={{ $json.position }}",
+              "type": "string"
+            },
+            {
+              "id": "d0507055-b559-4d7e-8943-49b0ec568367",
+              "name": "displayed link",
+              "value": "={{ $json.displayed_link || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "07f7bbdb-6178-41ae-a980-690dc10b5d1e",
+              "name": "domain",
+              "value": "={{$json.link.replace(/^https?:\\/\\/(www\\.)?/,'').split('/')[0]}}",
+              "type": "string"
+            },
+            {
+              "id": "5771f3a7-c808-4998-b362-f2993f141e7f",
+              "name": "source",
+              "value": "={{ JSON.stringify($json.about_this_result?.source || \"Google Search\") }}",
+              "type": "string"
+            },
+            {
+              "id": "d527183a-9e16-49c5-b74c-e66ef2a152a9",
+              "name": "lead_id",
+              "value": "={{Date.now()+\"-\"+$itemIndex}}",
+              "type": "string"
+            },
+            {
+              "id": "745b96ad-53e6-42be-bc9c-c24d751bb96a",
+              "name": "crawl_date",
+              "value": "={{new Date().toISOString()}}",
+              "type": "string"
+            },
+            {
+              "id": "f48e0a5e-ba3f-4aab-b3d7-6231062bf549",
+              "name": "website_status",
+              "value": "Pending Audit",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1024,
+        -320
+      ],
+      "id": "4c09c39f-8abd-4ac1-95d7-9705a2273f47",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "url": "={{\"https://r.jina.ai/\" + $json.Website}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-No-Links",
+              "value": "true"
+            },
+            {
+              "name": "X-Return-Format",
+              "value": "markdown"
+            },
+            {
+              "name": "Accept",
+              "value": "text/plain"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "HTML"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1248,
+        -320
+      ],
+      "id": "6caac0da-33bf-4199-9344-941e75f38c09",
+      "name": "HTTP Request1",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Business Name:\n{{ $('AI Agent1').item.json.output.business_name }}\n\nWebsite Type:\n{{ $('AI Agent1').item.json.output.website_type }}\n\nWebsite Score:\n{{ $('AI Agent1').item.json.output.website_score }}\n\nIssues:\n{{ JSON.stringify($('AI Agent1').item.json.output.issues) }}\n\nAutomation Opportunities:\n{{ JSON.stringify($('AI Agent1').item.json.output.automation_opportunities) }}\n\nLead Generation Opportunities:\n{{ JSON.stringify($('AI Agent1').item.json.output.lead_generation_opportunities) }}\n\nRecommended Services:\n{{ JSON.stringify($('AI Agent1').item.json.output.recommended_services) }}\n\nSummary:\n{{ $('AI Agent1').item.json.output.summary }}\n\nCalculate a professional lead score.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a Senior Sales Consultant and B2B Lead Qualification Expert.\n\nAnalyze the business audit and score this lead.\n\nConsider:\n\n• Website Quality\n• Business Size\n• Website Issues\n• AI Automation Opportunities\n• Sales Funnel\n• Lead Capture\n• CRM Readiness\n• Buying Intent\n• Estimated Budget\n• ROI Potential\n• Automation Complexity\n• Revenue Potential\n\nLead Score Rules\n\n90-100 = Hot Lead\n\n75-89 = High Priority\n\n60-74 = Medium Priority\n\nBelow 60 = Low Priority\n\nReturn ONLY valid JSON.\n\nDo not return markdown.",
+          "maxIterations": 1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2048,
+        -320
+      ],
+      "id": "4ab02402-66d3-4b82-ae45-7a56d1bc11df",
+      "name": "AI Agent",
+      "notesInFlow": true,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput",
+      "notes": "Lead Score Agent"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"lead_score\": 0,\n  \"priority\": \"\",\n  \"buying_intent\": \"\",\n  \"estimated_budget\": \"\",\n  \"closing_probability\": \"\",\n  \"decision_maker_probability\": \"\",\n  \"recommended_offer\": \"\",\n  \"reason\": \"\",\n  \"next_action\": \"\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2192,
+        -96
+      ],
+      "id": "b30de181-3218-441d-b3fb-4d5b4bce31b9",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Business Name:\n{{ $('AI Agent1').item.json.output.business_name }}\n\nWebsite Type:\n{{ $('AI Agent1').item.json.output.website_type }}\n\nWebsite Score:\n{{ $('AI Agent1').item.json.output.website_score }}\n\nLead Score:\n{{ $('AI Agent').item.json.output.lead_score }}\n\nPriority:\n{{ $('AI Agent').item.json.output.priority }}\n\nBuying Intent:\n{{ $('AI Agent').item.json.output.buying_intent }}\n\nIssues:\n{{ JSON.stringify($('AI Agent1').item.json.output.issues) }}\n\nAutomation Opportunities:\n{{ JSON.stringify($('AI Agent1').item.json.output.automation_opportunities) }}\n\nRecommended Offer:\n{{ $('AI Agent').item.json.output.recommended_offer }}\n\nPersonalization Angle:\n{{ $('AI Agent1').item.json.output.personalization_angle }}\n\nCold Email Hook:\n{{ $('AI Agent1').item.json.output.cold_email_hook }}\n\nWrite a personalized outreach email.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a senior B2B cold email copywriter.\n\nYour goal is to book a discovery call.\n\nRules:\n\n• Personalize the email.\n• Mention one website issue.\n• Mention one automation opportunity.\n• Explain business benefit.\n• Mention ROI.\n• Keep under 120 words.\n• Friendly and human.\n• No spam words.\n• No exaggerated claims.\n• End with a simple CTA.\n\nNever use:\n\nHope you are doing well.\n\nDear Sir/Madam.\n\nGreetings.\n\nInstead start naturally.\n\nNever use salesy language.\n\nKeep sentences short.\n\nUse one CTA only.\n\nSign with:\n\nYour Name\nFounder - AutoNode\nAI Automations & AI Agents\n\nReturn ONLY valid JSON.\n\nDo not use markdown."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2400,
+        -320
+      ],
+      "id": "9a57b774-7bb3-4e48-8e65-2238a38a3e3d",
+      "name": "AI Agent2",
+      "notesInFlow": true,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput",
+      "notes": "Cold Email Agent"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"subject\": \"\",\n  \"preview_text\": \"\",\n  \"email_body\": \"\",\n  \"cta\": \"\",\n  \"follow_up_days\": 3\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2544,
+        -96
+      ],
+      "id": "5332c5b8-795b-429d-9128-443ffd9f4e95",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Business Name:\n{{ $('AI Agent1').first().json.output.business_name }}\n\nWebsite:\n{{ $('Edit Fields1').first().json.Website }}\n\nPrevious Subject:\n{{ $('AI Agent2').first().json.output.subject }}\n\nPrevious Email:\n{{ $('AI Agent2').first().json.output.email_body }}\n\nRecommended Service:\n{{ $('AI Agent1').first().json.output.recommended_services }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert B2B sales follow-up copywriter.\n\nWrite a short, friendly follow-up email.\n\nRules:\n\n- Maximum 80 words.\n- Mention the previous email naturally.\n- Do not sound desperate.\n- Ask if they had time to review.\n- Offer a free consultation.\n- End with a simple question.\n\nReturn ONLY valid JSON.\n\n{\n  \"subject\":\"\",\n  \"email_body\":\"\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        3872,
+        -416
+      ],
+      "id": "09400f9c-5d5d-497f-94ce-b1cf3d63378b",
+      "name": "AI Agent3",
+      "notesInFlow": true,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput",
+      "notes": "Follow-Up Email Agent"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"subject\": \"\",\n  \"email_body\": \"\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        4016,
+        -192
+      ],
+      "id": "da00f116-d367-4f8e-a686-b641deb36d2b",
+      "name": "Structured Output Parser3"
+    },
+    {
+      "parameters": {
+        "sendTo": "=your-email@example.com",
+        "subject": "={{ $json.output.subject }}",
+        "message": "=<p>Hi ,{{ $('AI Agent1').first().json.output.business_name }}</p>\n\n<p>\n{{ $json.output.email_body }}\n</p>\n\n<br>\n\n<p>\nIf you'd like, I can also create a free AI automation roadmap specifically for your business.\n</p>\n\n<br>\n\nRegards,<br>\n\n<b>Your Name</b><br>\n\nFounder — AutoNode<br>\n\nAI Automations & AI Agents for Business",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        4224,
+        -416
+      ],
+      "id": "f11a0092-f04b-4c4e-a37d-7a0928bb2b50",
+      "name": "Send a message1",
+      "webhookId": "8c4d7f92-3e6a-4b1c-9d8f-2e5a7c4b9f16",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mK9vB3wLz7Qa5hDs",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Business Name:\n{{ $('AI Agent1').first().json.output.business_name }}\n\nWebsite:\n{{ $('Edit Fields1').first().json.Website }}\n\nBusiness Type:\n{{ $('AI Agent1').first().json.output.website_type }}\n\nWebsite Score:\n{{ $('AI Agent1').first().json.output.website_score }}\n\nIssues:\n{{ JSON.stringify($('AI Agent1').first().json.output.issues) }}\n\nAutomation Opportunities:\n{{ JSON.stringify($('AI Agent1').first().json.output.automation_opportunities) }}\n\nLead Generation Opportunities:\n{{ JSON.stringify($('AI Agent1').first().json.output.lead_generation_opportunities) }}\n\nLead Score:\n{{ $('AI Agent').first().json.output.lead_score }}\n\nRecommended Offer:\n{{ $('AI Agent').first().json.output.recommended_offer }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a Senior AI Automation Consultant.\n\nCreate a professional AI Automation Proposal for the client.\n\nYour proposal should include:\n\n1. Executive Summary\n2. Current Website Problems\n3. Recommended AI Solutions\n4. Recommended Automations\n5. CRM Improvements\n6. Lead Generation Improvements\n7. Estimated ROI\n8. Weekly Time Savings\n9. Recommended AI Tools\n10. Implementation Timeline\n11. Pricing Strategy\n12. Next Steps\n\nRules:\n\n• Be realistic.\n• Never exaggerate numbers.\n• Professional business language.\n• Return ONLY valid JSON."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        4672,
+        -416
+      ],
+      "id": "8e76b0ed-c732-4a22-9358-7b7e53bef6ea",
+      "name": "AI Agent4",
+      "notesInFlow": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "notes": "Proposal Generator"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"service_offer\": \"\",\n  \"estimated_roi\": \"\",\n  \"implementation_plan\": [\n    \"\"\n  ],\n  \"recommended_tools\": [\n    \"\"\n  ],\n  \"automation_solutions\": [\n    \"\"\n  ],\n  \"expected_benefits\": [\n    \"\"\n  ],\n  \"time_savings_per_week\": \"\",\n  \"lead_generation_increase\": \"\",\n  \"customer_experience_improvement\": \"\",\n  \"proposal_summary\": \"\",\n  \"pricing_range\": \"\",\n  \"implementation_duration\": \"\",\n  \"next_step\": \"\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        4816,
+        -192
+      ],
+      "id": "d160d8f7-881f-4004-aafe-e1df1d6c05d8",
+      "name": "Structured Output Parser4"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        4688,
+        -192
+      ],
+      "id": "2cdbeacd-312e-4215-9b92-a81e2d44bfc6",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "gA7xR2mKq9LpZ4Wd",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "proposal.pdf",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1QwErTyUiOpAsDfGhJkLzXcVbNmQwErTy",
+          "mode": "list",
+          "cachedResultName": "Client Proposals",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1QwErTyUiOpAsDfGhJkLzXcVbNmQwErTy"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        5472,
+        -416
+      ],
+      "id": "22441722-5652-4488-9216-562796a2b628",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "hT3vN8bYc1QeXsRz",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "your-email@example.com",
+        "subject": "={{ \"AI Growth Proposal for \" + $('Append row in sheet').item.json.Name }}",
+        "message": "=<h2>Hi {{ $('Append row in sheet').item.json.Name }},</h2>  <p> Thank you for taking the time to review your business. </p>  <p> I analyzed your website and prepared a custom <b>AI Automation Proposal</b> specifically for your business. </p>  <p> Inside the proposal you'll find: </p>  <ul> <li>Website Audit Summary</li> <li>AI Automation Opportunities</li> <li>Lead Generation Improvements</li> <li>CRM & Workflow Recommendations</li> <li>Estimated ROI</li> <li>Implementation Roadmap</li> </ul>  <p> I've attached the proposal PDF for your review. </p>  <p> If you'd like, we can schedule a free 20-minute consultation to discuss how these automations can help your business grow. </p>  <br>  Regards,<br><br>  <b>Your Name</b><br>  Founder — AutoNode<br>  AI Automations & AI Agents for Business",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": ""
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        5696,
+        -416
+      ],
+      "id": "89b7e641-7ecc-4060-adbe-83aa9215a151",
+      "name": "Send a message3",
+      "webhookId": "3f7d9a52-8c4e-4b6a-9f3d-6e8c2a5b7d94",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mK9vB3wLz7Qa5hDs",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        2064,
+        -96
+      ],
+      "id": "45aad12a-3ea6-44af-b8ed-eddb60d640b6",
+      "name": "Groq Chat Model2",
+      "credentials": {
+        "groqApi": {
+          "id": "gA7xR2mKq9LpZ4Wd",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        2416,
+        -96
+      ],
+      "id": "e9308434-41b1-44a4-a9d6-aa892cfe8fae",
+      "name": "Groq Chat Model3",
+      "credentials": {
+        "groqApi": {
+          "id": "gA7xR2mKq9LpZ4Wd",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        3888,
+        -192
+      ],
+      "id": "cea30302-f86b-4629-a129-67e44a36cd01",
+      "name": "Groq Chat Model4",
+      "credentials": {
+        "groqApi": {
+          "id": "gA7xR2mKq9LpZ4Wd",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        1712,
+        -96
+      ],
+      "id": "f6fba261-f282-44b3-a3f0-6f8bbd57e41f",
+      "name": "Groq Chat Model5",
+      "credentials": {
+        "groqApi": {
+          "id": "gA7xR2mKq9LpZ4Wd",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ebc215a5-e080-4be9-a42c-1227007df55b",
+              "leftValue": "={{ $json.search_query }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "ec772af8-28de-43f9-ae89-0fcf8bae6f63",
+              "leftValue": "={{ $json.location }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "9fcc8c3e-9105-4a2e-b43c-8ff6be874b09",
+              "leftValue": "={{$json.search_query.length}}",
+              "rightValue": 2,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "311399b5-bef1-45ab-b41f-f2e8d508b8c3",
+              "leftValue": "={{$json.location.length}}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        128,
+        -224
+      ],
+      "id": "ccde910b-f989-4497-ac91-38d8ea7b8494",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": false,\n  \"message\": \"search_query and location are required.\",\n  \"status\": 400\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        352,
+        -128
+      ],
+      "id": "df395a50-d223-4dc0-b350-10b7da457766",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1a2B3c4D5e6F7g8H9i0JkLmNoPqRsTuVwXyZ1234",
+          "mode": "list",
+          "cachedResultName": "leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1a2B3c4D5e6F7g8H9i0JkLmNoPqRsTuVwXyZ1234/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 0,
+          "mode": "list",
+          "cachedResultName": "CRM",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1a2B3c4D5e6F7g8H9i0JkLmNoPqRsTuVwXyZ1234/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Domain",
+              "lookupValue": "={{ $('Edit Fields1').item.json.domain }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2752,
+        -320
+      ],
+      "id": "48152ad6-b601-4234-9a88-9181558ee4f7",
+      "name": "Get row(s) in sheet",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleApi": {
+          "id": "hF7Qz2WcRq9NpXeS",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ff6266f7-ede5-4b90-b4be-0331f1437452",
+              "leftValue": "={{ $json.Domain || $json.domain }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2976,
+        -320
+      ],
+      "id": "0d7ed93a-de27-40e1-a253-eb9f322053d7",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "html": "={{ $json.html }}",
+        "additionalOptions": {}
+      },
+      "type": "n8n-nodes-pdfbolt.pdfBolt",
+      "typeVersion": 1,
+      "position": [
+        5248,
+        -416
+      ],
+      "id": "e1d81558-d909-464a-ac24-09d117edceee",
+      "name": "PDFBolt",
+      "credentials": {
+        "pdfBoltApi": {
+          "id": "FAKE_PDFBOLT_CRED_ID",
+          "name": "PDFBolt account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "html": "<html>\n<head>\n<style>\nbody{\nfont-family:Arial,sans-serif;\npadding:40px;\ncolor:#333;\nline-height:1.7;\n}\n\n.header{\ntext-align:center;\nborder-bottom:3px solid #1D9E75;\npadding-bottom:20px;\nmargin-bottom:30px;\n}\n\nh1{\ncolor:#1D9E75;\nmargin-bottom:5px;\n}\n\nh2{\ncolor:#0F6E56;\nmargin-top:30px;\n}\n\n.card{\nbackground:#f8f8f8;\npadding:15px;\nmargin:15px 0;\nborder-left:5px solid #1D9E75;\nborder-radius:8px;\n}\n\n.footer{\nmargin-top:40px;\nfont-size:13px;\ntext-align:center;\ncolor:#777;\nborder-top:1px solid #ddd;\npadding-top:20px;\n}\n</style>\n</head>\n\n<body>\n\n<div class=\"header\">\n\n<h1>AI Automation Proposal</h1>\n\n<h3>{{ $('AI Agent1').first().json.output.business_name }}</h3>\n\n<p>{{ $('Edit Fields1').first().json.Website }}</p>\n\n</div>\n\n<h2>Executive Summary</h2>\n\n<div class=\"card\">\n{{ $json.output.proposal_summary }}\n</div>\n\n<h2>Recommended AI Service</h2>\n\n<div class=\"card\">\n{{ $json.output.service_offer }}\n</div>\n\n<h2>Estimated ROI</h2>\n\n<div class=\"card\">\n{{ $json.output.estimated_roi }}\n</div>\n\n<h2>Implementation Timeline</h2>\n\n<div class=\"card\">\n{{ $json.output.implementation_duration }}\n</div>\n\n<h2>Expected Benefits</h2>\n\n<div class=\"card\">\n{{ JSON.stringify($json.output.expected_benefits) }}\n</div>\n\n<h2>Automation Solutions</h2>\n\n<div class=\"card\">\n{{ JSON.stringify($json.output.automation_solutions) }}\n</div>\n\n<h2>Recommended AI Tools</h2>\n\n<div class=\"card\">\n{{ JSON.stringify($json.output.recommended_tools) }}\n</div>\n\n<h2>Implementation Plan</h2>\n\n<div class=\"card\">\n{{ JSON.stringify($json.output.implementation_plan) }}\n</div>\n\n<h2>Weekly Time Savings</h2>\n\n<div class=\"card\">\n{{ $json.output.time_savings_per_week }}\n</div>\n\n<h2>Lead Growth</h2>\n\n<div class=\"card\">\n{{ $json.output.lead_generation_increase }}\n</div>\n\n<h2>Customer Experience Improvement</h2>\n\n<div class=\"card\">\n{{ $json.output.customer_experience_improvement }}\n</div>\n\n<h2>Next Step</h2>\n\n<div class=\"card\">\n{{ $json.output.next_step }}\n</div>\n\n<div class=\"footer\">\n\n<b>Prepared By</b><br>\n\nYour Name<br>\n\nAutoNode<br>\n\nAI Automations & AI Agents for Business\n\n</div>\n\n</body>\n</html>"
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        5024,
+        -416
+      ],
+      "id": "17c0a325-1d06-4078-b196-d3961974dd90",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Lead generation workflow completed successfully.\",\n  \"business\": \"{{ $('Append row in sheet').item.json.Name }}\",\n  \"website\": \"{{ $('Append row in sheet').item.json.Website }}\",\n  \"lead_score\": \"={{ $('AI Agent').item.json.output.lead_score }}\",\n  \"priority\": \"={{ $('AI Agent').item.json.output.priority }}\",\n  \"proposal_generated\": true,\n  \"proposal_uploaded\": true,\n  \"email_sent\": true,\n  \"followup_scheduled\": true\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        5920,
+        -416
+      ],
+      "id": "9346b6bd-993f-43d0-98bf-fe0ff42af4a6",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5b934abe-90d4-4152-aaaa-c226436829e0",
+              "leftValue": "={{ $json.link }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        800,
+        -320
+      ],
+      "id": "2bce1bfa-f003-4b00-93d5-a4e39d7f0f11",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3dc98354-c715-4b7a-a29d-8a0d23fa685a",
+              "leftValue": "={{$json.HTML}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1472,
+        -320
+      ],
+      "id": "8a8fae92-a990-44ff-b552-51f42358ce3b",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Lead Already Exist",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3200,
+        -224
+      ],
+      "id": "fb072509-0fbb-40bd-9275-7c3d90e03ca8",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1a2B3c4D5e6F7g8H9i0JkLmNoPqRsTuVwXyZ1234",
+          "mode": "list",
+          "cachedResultName": "leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1a2B3c4D5e6F7g8H9i0JkLmNoPqRsTuVwXyZ1234/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 0,
+          "mode": "list",
+          "cachedResultName": "CRM",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1a2B3c4D5e6F7g8H9i0JkLmNoPqRsTuVwXyZ1234/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $('AI Agent1').first().json.output.business_name }}",
+            "Status": "New Lead",
+            "Lead Score": "={{ $('AI Agent').first().json.output.lead_score }}",
+            "Created At": "={{ $now }}",
+            "Budget Estimate": "={{ $('AI Agent').first().json.output.estimated_budget }}",
+            "Website": "={{ $('Edit Fields1').first().json.Website }}",
+            "Domain": "={{ $('Edit Fields1').first().json.domain }}",
+            "Websie type": "={{ $('AI Agent1').first().json.output.website_type }}",
+            "Website Score": "={{ $('AI Agent1').first().json.output.website_score }}",
+            "Priority": "={{ $('AI Agent').first().json.output.priority }}",
+            "Buying Intent": "={{ $('AI Agent').first().json.output.buying_intent }}",
+            "Email Subject": "={{ $('AI Agent2').first().json.output.subject }}",
+            "Email Sent": "Yes",
+            "Offer": "={{ $('AI Agent').first().json.output.recommended_offer }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Budget Estimate",
+              "displayName": "Budget Estimate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Score",
+              "displayName": "Lead Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Domain",
+              "displayName": "Domain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Websie type",
+              "displayName": "Websie type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website Score",
+              "displayName": "Website Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Buying Intent",
+              "displayName": "Buying Intent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Subject",
+              "displayName": "Email Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Sent",
+              "displayName": "Email Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Offer",
+              "displayName": "Offer",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3200,
+        -416
+      ],
+      "id": "60f65434-8c71-4287-835f-030c8d89a04c",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleApi": {
+          "id": "hF7Qz2WcRq9NpXeS",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message2": {
+      "main": [
+        [
+          {
+            "node": "AI Agent4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent3": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser3": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent4": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser4": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent4",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent4",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Send a message3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PDFBolt": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "PDFBolt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
