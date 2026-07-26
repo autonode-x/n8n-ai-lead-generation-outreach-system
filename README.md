@@ -182,14 +182,23 @@ Creates:
 # 📂 Folder Structure
 
 ```
-assets/
-docs/
-prompts/
-templates/
-examples/
-screenshots/
-workflow.json
-README.md
+```
+09-n8n-ai-lead-genration-system
+│
+├── workflow.json
+├── README.md
+├── LICENSE
+├── .gitignore
+│
+├── assets
+│   ├── workflow.png
+│   └── architecture.png
+│
+├── sample
+│   ├── request.json
+│   └── response.json
+
+```
 ```
 
 ---
