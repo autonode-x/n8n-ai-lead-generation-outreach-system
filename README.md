@@ -1,347 +1,99 @@
-# 🚀 AI Lead Generation & Sales Outreach Automation System
+# AI Lead Research & Website Audit Automation
 
-An end-to-end AI-powered Lead Generation workflow built in **n8n** that automatically finds businesses, audits their websites, qualifies leads, generates personalized cold emails, schedules follow-ups, creates professional AI proposals, updates CRM, and notifies the sales team.
+> **Architecture:** See [ARCHITECTURE.md](ARCHITECTURE.md) for the infographic, detailed flow, and trust boundaries.
 
----
+An n8n workflow that turns a user-defined business search into a reviewed lead-research packet. It discovers public business listings, fetches public website text through a reader service, creates structured AI-assisted website and lead assessments, drafts outreach for human review, and prepares a proposal PDF for configured storage.
 
-# 📌 Features
+> **Portfolio-safe workflow export:** `workflow.json` is a sanitized template. Credentials and workspace-specific Google/Slack identifiers have been removed. Configure your own credentials and resources before importing or activating it.
 
-- 🔍 Google Business Search using SerpAPI
-- 🌐 Website Crawling using Jina AI
-- 🤖 AI Website Audit
-- ⭐ AI Lead Scoring
-- 📧 Personalized Cold Email Generation
-- ⏳ Automatic Follow-up Emails
-- 📄 AI Proposal Generator
-- 📑 Professional PDF Proposal
-- ☁️ Google Drive Upload
-- 📊 Google Sheets CRM
-- 💬 Slack Notifications
-- 📩 Gmail Integration
-- 🔄 Duplicate Lead Detection
-- 📈 ROI Estimation
-- 💡 AI Automation Recommendations
+## Project snapshot
 
----
+- **Category:** Workflow automation, AI agents, lead research, n8n
+- **Orchestration:** n8n workflow with validation, branching, retries, and human approval
+- **External services represented:** SerpAPI, Jina Reader, an OpenRouter chat model, Google Sheets, Gmail, Slack, Google Drive, and PDFBolt
+- **Outputs:** Structured website audit, lead score, outreach draft, reviewer decision, CRM status, and proposal PDF
+- **Contact policy:** The workflow drafts outreach for review. It does not send an email to a prospect or schedule a follow-up; no verified prospect email is enriched in this design.
 
-# 🏗 Workflow Overview
+## What it does
 
-```
-Webhook
+1. Accepts a POST request containing a search query, location, optional industry/business type/country, and reviewer email.
+2. Normalizes and validates the request, then returns an HTTP `202` for accepted work or `400` for invalid input.
+3. Searches public business listings and normalizes the returned name, URL, snippet, and domain.
+4. Rejects URLs that fail the current HTTPS hostname pattern, fetches website text through Jina Reader, and limits the content passed to the audit agent.
+5. Produces a structured website audit and validates its score/output shape.
+6. Checks a Google Sheets CRM for an existing domain to avoid processing duplicates.
+7. Produces a structured lead score and a personalized outreach draft; validates both before continuing.
+8. Saves the lead for review and sends the draft to the configured reviewer using a Gmail approval gate.
+9. Records approval or rejection, posts a status notification to Slack, and on approval creates a proposal, renders it as a PDF, and uploads it to the configured Drive folder.
 
-↓
+## Workflow inputs
 
-Validate Request
+| Field | Required | Notes |
+|---|---:|---|
+| `search_query` | Yes | 3–150 characters |
+| `location` | Yes | 2–100 characters |
+| `reviewer_email` | Yes | Must be a valid email address; this is the internal reviewer, not a prospect |
+| `industry` | No | Optional search context |
+| `business_type` | No | Optional search context |
+| `country` | No | Two-letter country code; defaults to `us` in the template |
 
-↓
+Example request (replace host and value with your own deployment data):
 
-Google Search (SerpAPI)
-
-↓
-
-Extract Websites
-
-↓
-
-Website Crawl
-
-↓
-
-AI Website Audit
-
-↓
-
-Lead Qualification
-
-↓
-
-Cold Email Generator
-
-↓
-
-Google Sheets CRM
-
-↓
-
-Send Email
-
-↓
-
-Schedule Follow-up
-
-↓
-
-Slack Notification
-
-↓
-
-Proposal Generator
-
-↓
-
-HTML Proposal
-
-↓
-
-PDF
-
-↓
-
-Google Drive Upload
-
-↓
-
-Send Proposal
-
-↓
-
-Webhook Response
+```bash
+curl -X POST "$N8N_WEBHOOK_URL" \
+  -H "Content-Type: application/json" \
+  -H "X-Workflow-Auth: $WORKFLOW_WEBHOOK_SECRET" \
+  -d '{"search_query":"independent dental clinic","location":"Austin, TX","industry":"healthcare","reviewer_email":"reviewer@example.com","country":"us"}'
 ```
 
----
+Do not place real secrets in the command, source control, screenshots, or public portfolio materials. Prefer a dedicated header-auth credential configured in n8n.
 
-# 🧠 AI Agents Included
+## Import and configure
 
-## 1. Website Audit Agent
+1. Use a current n8n installation compatible with the node types/versions in the export. Install any community nodes required by your own deployment (notably PDFBolt and the n8n LangChain nodes).
+2. Import `workflow.json` into a **test** n8n workspace. The JSON is a template, not a ready-to-run deployment.
+3. Create credentials in n8n for SerpAPI, OpenRouter, Google Sheets, Gmail, Slack, Google Drive, and PDFBolt. The export intentionally contains no credential bindings or credential values.
+4. Configure your own spreadsheet ID and tab, Drive folder, Slack channel, and authorized reviewer. Replace the marked `REPLACE_WITH_YOUR_...` values in the imported workflow using your own non-production resources first.
+5. Add webhook Header Auth (the note on the Webhook node is intentional), network-level rate limiting, request/body-size limits, and an execution/data-retention policy. Do not activate the webhook publicly until these are verified.
+6. Harden the outbound URL validation as described under **Security considerations** before using the workflow with untrusted search results.
+7. Run test cases for invalid input, no search results, an unsafe URL, a fetch failure, duplicate domain, invalid AI output, reviewer rejection, and reviewer approval. Confirm that no prospect email is sent.
+8. Activate only after the integrations, privacy notices, provider terms, and access controls are configured for your own environment.
 
-Analyzes:
+## Security and privacy notes
 
-- Website Design
-- UI/UX
-- Mobile Friendliness
-- SEO
-- Trust Signals
-- Lead Capture
-- CRM Readiness
-- AI Opportunities
-- Sales Funnel
-- Conversion Rate
+This public export has been scrubbed of credential bindings, webhook IDs, the source n8n instance identifier, original Google Sheet/Drive identifiers, the Slack channel ID, and the named owner signature. That cleanup **does not prove that the original workflow or any previous copy is secure**. If a credential or endpoint secret was ever exposed in a public repository, rotate/revoke it at the provider. Review repository history and backups too.
 
-Returns structured JSON.
+### Important hardening before production
 
----
+- **Outbound URL / SSRF:** The source workflow's regex checks HTTPS and excludes a few hostname patterns, but does not reliably block private, loopback, link-local, IPv6, unusual IP encodings, DNS rebinding, or all redirect cases. The fetch is routed through an external reader service, which is another trust boundary. Replace the pattern-only check with a dedicated URL validation/proxy design that resolves DNS, blocks all non-public address ranges, re-validates redirects and DNS, enforces allowed schemes/ports, and applies egress controls. Test adversarial URLs before activation.
+- **Webhook protection:** Add authentication, rate limits, abuse monitoring, body-size caps, and non-production testing. Keep the webhook path private until protected.
+- **AI prompt injection:** Web content/search snippets are untrusted. The prompts instruct models to ignore embedded commands, but this is defense-in-depth, not a guarantee. Never let fetched content control tools, credentials, destinations, or automatic outreach.
+- **Data minimization:** Business names, domains, snippets, website text, lead scores, drafts, and reviewer email may be stored or processed by third parties. Disclose this, minimize retention, restrict access, and check provider terms/data-processing requirements for your use case.
+- **Human approval:** Keep the review gate. Approval should mean review of the draft only; it must not bypass legal/compliance checks or authorize mass unsolicited contact.
+- **Output safety:** The proposal HTML escapes model-derived text before rendering. Preserve escaping if changing the template, and do not embed arbitrary HTML from scraped pages.
+- **Credentials and least privilege:** Use n8n's credential vault, separate least-privilege service accounts, rotate credentials, and avoid exporting credentials or execution data.
+- **No automatic ROI claims:** AI-generated scores, budget estimates, and proposal benefits are estimates and may be unsupported. Validate them with evidence before sharing with a client.
 
-## 2. Lead Score Agent
+## Known limitations
 
-Calculates:
+- Search and website text coverage depend on external providers and public-site availability.
+- The workflow depends on external APIs, compatible n8n nodes, credentials, and quotas.
+- Model outputs require human fact-checking; they are not a verified business or financial assessment.
+- A PDF conversion/storage path is available only after the PDFBolt and Drive integrations are configured.
+- The workflow is provided as a portfolio template; no production uptime, compliance certification, or security guarantee is implied.
 
-- Website Score
-- Buying Intent
-- Estimated Budget
-- Closing Probability
-- Priority
-- Recommended Offer
+## Suggested portfolio description
 
----
+> Built an n8n-based AI lead-research workflow that validates requests, discovers public businesses, audits website content with structured AI outputs, scores and de-duplicates leads, and routes outreach drafts through a human approval gate. Includes CRM status updates, Slack notifications, and proposal PDF generation. Designed with validation, prompt-injection defenses, and privacy-conscious credential removal; production deployment requires environment-specific SSRF and access-control hardening.
 
-## 3. Cold Email Agent
+## License
 
-Generates:
+Add a license only if you have the rights to publish and reuse this workflow and its embedded prompts/templates. Review third-party node and service terms before redistribution.
 
-- Personalized Subject
-- Email Body
-- CTA
-- Follow-up Days
 
----
+## Synthetic request and response examples
 
-## 4. Follow-up Agent
+- [Sample request](sample/request.json)
+- [Sample successful response](sample/response.json)
 
-Creates short follow-up emails after the configured waiting period.
-
----
-
-## 5. Proposal Generator
-
-Creates:
-
-- Executive Summary
-- AI Solutions
-- ROI
-- Timeline
-- Pricing
-- Benefits
-- Next Steps
-
----
-
-# 🛠 Tech Stack
-
-- n8n
-- Groq AI (Llama 3.3 70B)
-- SerpAPI
-- Jina AI
-- Google Sheets
-- Gmail API
-- Slack API
-- Google Drive API
-- PDFBolt
-
----
-
-# 📂 Folder Structure
-
-```
-```
-09-n8n-ai-lead-genration-system
-│
-├── workflow.json
-├── README.md
-├── LICENSE
-├── .gitignore
-│
-├── assets
-│   ├── workflow.png
-│   └── architecture.png
-│
-├── sample
-│   ├── request.json
-│   └── response.json
-
-```
-```
-
----
-
-# 📥 Webhook Request
-
-```json
-{
-  "search_query": "Dentists",
-  "location": "New York",
-  "industry": "Healthcare",
-  "business_type": "Dental Clinic"
-}
-```
-
----
-
-# 📤 Output
-
-- Website Audit
-- Lead Score
-- Personalized Cold Email
-- Follow-up Email
-- Proposal PDF
-- CRM Entry
-- Slack Notification
-
----
-
-# 🔄 Automation Flow
-
-```
-Search Businesses
-
-↓
-
-Analyze Website
-
-↓
-
-Score Lead
-
-↓
-
-Generate Email
-
-↓
-
-Store CRM
-
-↓
-
-Send Email
-
-↓
-
-Wait
-
-↓
-
-Follow-up
-
-↓
-
-Generate Proposal
-
-↓
-
-Upload PDF
-
-↓
-
-Send Proposal
-
-↓
-
-Notify Team
-```
-
----
-
-# 📊 Integrations
-
-✅ SerpAPI
-
-✅ Groq AI
-
-✅ Google Sheets
-
-✅ Gmail
-
-✅ Google Drive
-
-✅ Slack
-
-✅ PDFBolt
-
----
-
-# 🎯 Business Use Cases
-
-- AI Agencies
-- Marketing Agencies
-- Lead Generation Companies
-- CRM Automation
-- Sales Teams
-- Consultants
-- Freelancers
-
----
-
-# 🚀 Future Improvements
-
-- Apollo Integration
-- Hunter.io Email Finder
-- BuiltWith Tech Detection
-- LinkedIn Enrichment
-- Multi-step Email Sequences
-- HubSpot CRM
-- Airtable CRM
-- PostgreSQL Database
-- WhatsApp Outreach
-- Loom Video Generation
-- AI Voice Outreach
-
----
-
-# 👨‍💻 Author
-
-**Piyush Kumar**
-
-Founder — **AutoNode**
-
-AI Automations & AI Agents for Business
-
-LinkedIn
-
-https://www.linkedin.com/in/piyush-ai
-
-GitHub
-
-https://github.com/autonode-x
-
----
-
-⭐ If you found this project useful, don't forget to star the repository.
+These examples use synthetic demonstration data and show the successful route only. HTTP status codes are returned separately by the workflow. Configure authentication and credentials in your own n8n instance before activation.
