@@ -1,6 +1,5 @@
 # AI Lead Research & Website Audit — Architecture
 
-![Architecture infographic](assets/architecture.png)
 
 
 **End-to-end n8n flow to discover public businesses, audit websites, score leads, draft outreach for review, and prepare a proposal PDF.**
