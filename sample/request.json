@@ -1,8 +1,8 @@
 {
-  "search_query": "independent bicycle repair shop",
-  "location": "Portland, Oregon",
+  "search_query": "restaurants",
+  "location": "Haldwani, Uttarakhand",
+  "industry": "Food & Beverage",
+  "business_type": "Restaurant",
   "reviewer_email": "reviewer@example.com",
-  "industry": "local services",
-  "business_type": "independent repair shop",
-  "country": "us"
+  "country": "India"
 }
